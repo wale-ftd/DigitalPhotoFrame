@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
+#include <wchar.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -83,20 +83,35 @@ main( int     argc,
   int           n, num_chars;
 
 
-  if ( argc != 3 )
+  if ( argc != 2 )
   {
-    fprintf ( stderr, "usage: %s font sample-text\n", argv[0] );
+    fprintf ( stderr, "usage: %s font\n", argv[0] );
     exit( 1 );
   }
 
   filename      = argv[1];                           /* first argument     */
-  text          = argv[2];                           /* second argument    */
-  num_chars     = strlen( text );
+  //text          = argv[2];                           /* second argument    */
+  //num_chars     = strlen( text );
   //angle         = ( 25.0 / 360 ) * 3.14159 * 2;      /* use 25 degrees     */
   angle         = ( 0.0 / 360 ) * 3.14159 * 2;      /* use 25 degrees     */
   target_height = HEIGHT;
 
   int chinese_str[] = {0x5f20, 0x88d5, 0x7ef4, 0x7a};   /* 张裕维z 的Unicode码 */
+//  char *str = "裕维yw";   /* 这样写不可以，会变得复杂。因为中文用两个字节表示，英文用一个字节表示。所以后来就引入了宽字符。 */
+  wchar_t *str =  L"裕维yw"; /* 不管是英文还是中文都用4个字节来表示，就统一起来了。 */
+  unsigned int *p_i = (unsigned int *)str;
+  int i;
+
+#if 0
+  printf("Unicode:\n");
+  for(i = 0; i < wcslen(str); i++)
+  {
+      printf("0x%x ", p_i[i]);
+  }
+  printf("\n");
+  /* 输出：0x88d5 0x7ef4 0x79 0x77 */
+  return 0;
+#endif
 
   error = FT_Init_FreeType( &library );              /* initialize library */
   /* error handling omitted */
@@ -129,14 +144,16 @@ main( int     argc,
     pen.y = ( target_height - 50 ) * 64;
 
   //for ( n = 0; n < num_chars; n++ )
-  for ( n = 0; n < sizeof(chinese_str)/sizeof(chinese_str[0]); n++ )
+  //for ( n = 0; n < sizeof(chinese_str)/sizeof(chinese_str[0]); n++ )
+  for ( n = 0; n < wcslen(str); n++ )
   {
     /* set transformation */
     FT_Set_Transform( face, &matrix, &pen );
 
     /* load glyph image into the slot (erase previous one) */
     //error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
-    error = FT_Load_Char( face, chinese_str[n], FT_LOAD_RENDER );
+    //error = FT_Load_Char( face, chinese_str[n], FT_LOAD_RENDER );
+    error = FT_Load_Char( face, str[n], FT_LOAD_RENDER );
     if ( error )
       continue;                 /* ignore errors */
 
