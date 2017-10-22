@@ -164,7 +164,7 @@ static void show_font_chinese(int x, int y, unsigned char *s)
             {
                 if(hzdata_base[hzdata_y*bytes_per_x_hzdata]>>(hzdata_x-8) & 0x01)
                 {
-                    /* 不是y+hzdata_y*bytes_per_x_hzdata，而是y+hzdata_y。 */
+                    /* 不是y+hzdata_y*bytes_per_x_hzdata(会使字体变长一倍)，而是y+hzdata_y。 */
                     //lcd_put_pixel(x+HZDATA_X_MAX-1-hzdata_x, y+hzdata_y*bytes_per_x_hzdata, 0);             /* 黑 */
                     lcd_put_pixel(x+HZDATA_X_MAX-1-hzdata_x, y+hzdata_y, 0);             /* 黑 */
                 }
