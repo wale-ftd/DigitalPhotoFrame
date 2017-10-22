@@ -96,6 +96,8 @@ main( int     argc,
   angle         = ( 0.0 / 360 ) * 3.14159 * 2;      /* use 25 degrees     */
   target_height = HEIGHT;
 
+  int chinese_str[] = {0x5f20, 0x88d5, 0x7ef4, 0x7a};   /* 张裕维z 的Unicode码 */
+
   error = FT_Init_FreeType( &library );              /* initialize library */
   /* error handling omitted */
 
@@ -126,13 +128,15 @@ main( int     argc,
     pen.x = 0 * 64;
     pen.y = ( target_height - 50 ) * 64;
 
-  for ( n = 0; n < num_chars; n++ )
+  //for ( n = 0; n < num_chars; n++ )
+  for ( n = 0; n < sizeof(chinese_str)/sizeof(chinese_str[0]); n++ )
   {
     /* set transformation */
     FT_Set_Transform( face, &matrix, &pen );
 
     /* load glyph image into the slot (erase previous one) */
-    error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
+    //error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
+    error = FT_Load_Char( face, chinese_str[n], FT_LOAD_RENDER );
     if ( error )
       continue;                 /* ignore errors */
 
