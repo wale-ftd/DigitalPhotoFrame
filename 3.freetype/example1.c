@@ -102,14 +102,14 @@ main( int     argc,
   unsigned int *p_i = (unsigned int *)str;
   int i;
 
-#if 0
-  printf("Unicode:\n");
+  printf("Unicode: ");
   for(i = 0; i < wcslen(str); i++)
   {
       printf("0x%x ", p_i[i]);
   }
   printf("\n");
   /* 输出：0x88d5 0x7ef4 0x79 0x77 */
+#if 0
   return 0;
 #endif
 
