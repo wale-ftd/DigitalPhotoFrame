@@ -31,6 +31,7 @@ draw_bitmap( FT_Bitmap*  bitmap,
   FT_Int  x_max = x + bitmap->width;
   FT_Int  y_max = y + bitmap->rows;
 
+  printf("x = %02d, y = %02d\n", x, y);
 
   for ( i = x, p = 0; i < x_max; i++, p++ )
   {
@@ -54,7 +55,9 @@ show_image( void )
 
   for ( i = 0; i < HEIGHT; i++ )
   {
-    for ( j = 0; j < WIDTH; j++ )
+      printf("%02d", i);    
+
+      for ( j = 0; j < WIDTH; j++ )
       putchar( image[i][j] == 0 ? ' '
                                 : image[i][j] < 128 ? '+'
                                                     : '*' );
