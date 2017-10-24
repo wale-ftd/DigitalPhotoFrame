@@ -10,6 +10,7 @@
 #include <wchar.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_GLYPH_H
 
 
 #define WIDTH   100 //640
@@ -31,7 +32,7 @@ draw_bitmap( FT_Bitmap*  bitmap,
   FT_Int  x_max = x + bitmap->width;
   FT_Int  y_max = y + bitmap->rows;
 
-  printf("x = %02d, y = %02d\n", x, y);
+  //printf("x = %02d, y = %02d\n", x, y);
 
   for ( i = x, p = 0; i < x_max; i++, p++ )
   {
@@ -85,6 +86,8 @@ main( int     argc,
   int           target_height;
   int           n, num_chars;
 
+  FT_BBox  bbox;
+  FT_Glyph  glyph; /* a handle to the glyph image */
 
   if ( argc != 2 )
   {
@@ -111,7 +114,7 @@ main( int     argc,
       printf("0x%x ", p_i[i]);
   }
   printf("\n");
-  /* 输出：0x88d5 0x7ef4 0x79 0x77 */
+  /* 裕维yw：0x88d5 0x7ef4 0x79 0x77 */
 #if 0
   return 0;
 #endif
@@ -144,7 +147,7 @@ main( int     argc,
 //  pen.x = 300 * 64;
 //  pen.y = ( target_height - 200 ) * 64;
     pen.x = 0 * 64;
-    pen.y = ( target_height - 50 ) * 64;
+    pen.y = ( target_height - 60 ) * 64;
 
   //for ( n = 0; n < num_chars; n++ )
   //for ( n = 0; n < sizeof(chinese_str)/sizeof(chinese_str[0]); n++ )
@@ -159,6 +162,21 @@ main( int     argc,
     error = FT_Load_Char( face, str[n], FT_LOAD_RENDER );
     if ( error )
       continue;                 /* ignore errors */
+
+    error = FT_Get_Glyph( face->glyph, &glyph );
+    if ( error )
+    {
+        printf("calling FT_Get_Glyph() fail.\n");  
+        return -1;
+    }
+
+    FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_TRUNCATE, &bbox );
+
+    printf("current Unicode: 0x%x\n", str[n]);
+    printf("origin.x/64 = %d, origin.y/64 = %d\n", pen.x/64, pen.y/64);
+    printf("xMin = %d, xMax = %d, yMin = %d, yMax = %d\n", bbox.xMin, bbox.xMax, bbox.yMin, bbox.yMax);
+    printf("slot->advance.x/64 = %d, slot->advance.y/64 = %d\n", slot->advance.x/64, slot->advance.y/64);
+    //printf("glyph->advance.x/64 = %d, glyph->advance.y/64 = %d\n", glyph->advance.x/64, glyph->advance.y/64); /* what is it? */
 
     /* now, draw to our target surface (convert position) */
     draw_bitmap( &slot->bitmap,
