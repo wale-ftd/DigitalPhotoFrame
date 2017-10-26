@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <wchar.h>
 #include <ft2build.h>
+#include <math.h>
+#include <stdlib.h>
 #include FT_FREETYPE_H
 
 
@@ -51,14 +53,16 @@ int main(int argc, char **argv)
     FT_Error      error;
     FT_GlyphSlot  slot;
     FT_Vector     pen;                    /* untransformed origin  */
+    FT_Matrix     matrix;                 /* transformation matrix */
     int           n;
     unsigned char ascii = 'A';
     unsigned char str[] = "中";
     wchar_t *ce_mix_str =  L"裕维yw最棒"; /* 不管是英文还是中文都用4个字节来表示，就统一起来了。 */
+    double angle;
     
-    if ( argc != 2 )
+    if ( argc != 3 )
     {
-        fprintf ( stderr, "usage: %s font\n", argv[0] );
+        fprintf ( stderr, "usage: %s <font_file> <angle>\n", argv[0] );
         exit( 1 );
     }
 
@@ -120,6 +124,8 @@ int main(int argc, char **argv)
     printf("chinese code: %02x, %02x.\n", str[0], str[1]);
 
     /*------------------------ 显示矢量字体 -------------------------*/    
+    angle         = ( 1.0 * strtoul(argv[2], NULL, 10) / 360 ) * 3.14159 * 2;      /* use 25 degrees     */
+    
     error = FT_Init_FreeType( &library );              /* initialize library */
     /* error handling omitted */
     
@@ -129,6 +135,12 @@ int main(int argc, char **argv)
     FT_Set_Pixel_Sizes(face, 24, 0);
 
     slot = face->glyph;
+    
+    /* set up matrix */
+    matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
+    matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
+    matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
+    matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L );
 
 	/* 确定座标:
 	 * lcd_x = fb_var.xres/2 + ASCIIDATA_X_MAX + HZDATA_X_MAX
@@ -145,7 +157,7 @@ int main(int argc, char **argv)
     for ( n = 0; n < wcslen(ce_mix_str); n++ )
     {
         /* set transformation */
-        FT_Set_Transform( face, 0, &pen );
+        FT_Set_Transform( face, &matrix, &pen );
 
         /* load glyph image into the slot (erase previous one) */
         error = FT_Load_Char( face, ce_mix_str[n], FT_LOAD_RENDER );
