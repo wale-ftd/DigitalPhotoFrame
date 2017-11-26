@@ -10,6 +10,7 @@
 #include <wchar.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_GLYPH_H
 
 
 #define FONTDATAMAX 4096
@@ -49,9 +50,11 @@ int main(int argc, char **argv)
     int           n;
     wchar_t *ce_mix_str1 =  L"裕维yw最棒"; /* 不管是英文还是中文都用4个字节来表示，就统一起来了。 */
     wchar_t *ce_mix_str2 =  L"https://github.com/wale-ftd"; /* 不管是英文还是中文都用4个字节来表示，就统一起来了。 */
-    int line_box_ymin = 0xffffffff;    /* 初值给大点。注意：这里的ymin和ymax定义是基于笛卡尔坐标系的 */
+    int line_box_ymin = 0x7fffffff;    /* 初值给大点。注意：这里的ymin和ymax定义是基于笛卡尔坐标系的 */
     int line_box_ymax = 0;
-    
+    FT_BBox  bbox;
+    FT_Glyph  glyph; /* a handle to the glyph image */
+
     if ( argc != 2 )
     {
         fprintf ( stderr, "usage: %s <font_file>\n", argv[0] );
@@ -124,6 +127,23 @@ int main(int argc, char **argv)
             continue;                 /* ignore errors */
         }
 
+        error = FT_Get_Glyph( face->glyph, &glyph );
+        if ( error )
+        {
+            printf("calling FT_Get_Glyph() fail.\n");  
+            return -1;
+        }
+        
+        FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_TRUNCATE, &bbox );
+        if(line_box_ymin > bbox.yMin)
+        {
+            line_box_ymin = bbox.yMin;
+        }
+        if(line_box_ymax < bbox.yMax)
+        {
+            line_box_ymax = bbox.yMax;
+        }
+        
         /* now, draw to our target surface (convert position) */
         draw_bitmap( &slot->bitmap,
                    slot->bitmap_left,
@@ -133,10 +153,60 @@ int main(int argc, char **argv)
         pen.x += slot->advance.x;
         pen.y += slot->advance.y;   // 不旋转时，y不会改变的。
     }
+    printf("line_box_ymax - line_box_ymin = %d\n", line_box_ymax - line_box_ymin);
 
+	/* 确定座标:
+	 * lcd_x = 0
+	 * lcd_y = (line_box_ymax - line_box_ymin) + 24
+	 * 笛卡尔座标系:
+	 * x = lcd_x = 0
+	 * y = fb_var.yres - lcd_y = fb_var.yres - (line_box_ymax - line_box_ymin) - 24
+	 */
+    pen.x = (0) * 64;
+    pen.y = (fb_var.yres - (line_box_ymax - line_box_ymin) - 24) * 64;
+    line_box_ymin = 0x7fffffff;    /* 初值给大点。注意：这里的ymin和ymax定义是基于笛卡尔坐标系的 */
+    line_box_ymax = 0;
 
+    for ( n = 0; n < wcslen(ce_mix_str2); n++ )
+    {
+        /* set transformation */
+        FT_Set_Transform( face, 0, &pen );
 
+        /* load glyph image into the slot (erase previous one) */
+        error = FT_Load_Char( face, ce_mix_str2[n], FT_LOAD_RENDER );
+        if ( error )
+        {
+            printf("FT_Load_Char failed.\n");
+            continue;                 /* ignore errors */
+        }
 
+        error = FT_Get_Glyph( face->glyph, &glyph );
+        if ( error )
+        {
+            printf("calling FT_Get_Glyph() fail.\n");  
+            return -1;
+        }
+        
+        FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_TRUNCATE, &bbox );
+        if(line_box_ymin > bbox.yMin)
+        {
+            line_box_ymin = bbox.yMin;
+        }
+        if(line_box_ymax < bbox.yMax)
+        {
+            line_box_ymax = bbox.yMax;
+        }
+        
+        /* now, draw to our target surface (convert position) */
+        draw_bitmap( &slot->bitmap,
+                   slot->bitmap_left,
+                   fb_var.yres - slot->bitmap_top );
+
+        /* increment pen position */
+        pen.x += slot->advance.x;
+        pen.y += slot->advance.y;   // 不旋转时，y不会改变的。
+    }
+    printf("line_box_ymax - line_box_ymin = %d\n", line_box_ymax - line_box_ymin);
     
     FT_Done_Face    ( face );
     FT_Done_FreeType( library );
