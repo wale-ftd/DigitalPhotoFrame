@@ -27,7 +27,7 @@ typedef struct TGlyph_
 
 static int Get_Glyphs_Frm_Wstr(const FT_Face *face, const wchar_t *wstr, TGlyph *glyphs, int num_glyphs, int *num_get_glyphs);
 static void compute_string_bbox(const TGlyph *glyphs, int num_glyphs, FT_BBox *abbox);
-static void Draw_Glyphs(const TGlyph *glyphs, int num_glyphs, const FT_Vector *pen);
+static void Draw_Glyphs(const TGlyph *glyphs, int num_glyphs, FT_Vector *pen);
 static void lcd_put_pixel(int x, int y, unsigned int color);
 static void draw_bitmap( FT_Bitmap*  bitmap,
                          FT_Int      x,
@@ -120,11 +120,11 @@ int main(int argc, char **argv)
     line_box_height = string_bbox.yMax - string_bbox.yMin;
 
 	/* 确定座标:
-	 * lcd_x = (fb_var.xres - string_width) / 2
-	 * lcd_y = (fb_var.yres - string_height) / 2
+	 * lcd_x = (fb_var.xres - line_box_width) / 2
+	 * lcd_y = (fb_var.yres - line_box_height) / 2
 	 * 笛卡尔座标系:
-	 * x = lcd_x = (fb_var.xres - string_width) / 2
-	 * y = fb_var.yres - lcd_y = fb_var.yres - (fb_var.yres - string_height) / 2
+	 * x = lcd_x = (fb_var.xres - line_box_width) / 2
+	 * y = fb_var.yres - lcd_y = fb_var.yres - (fb_var.yres - line_box_height) / 2
 	 */
     pen.x = (fb_var.xres - line_box_width) / 2 * 64;
     pen.y = (fb_var.yres + line_box_height) / 2 * 64;
@@ -147,11 +147,11 @@ int main(int argc, char **argv)
     line_box_height = string_bbox.yMax - string_bbox.yMin;
 
 	/* 确定座标:
-	 * lcd_x = (fb_var.xres - string_width) / 2
-	 * lcd_y = (fb_var.yres - string_height) / 2 + 24
+	 * lcd_x = (fb_var.xres - line_box_width) / 2
+	 * lcd_y = (fb_var.yres - line_box_height) / 2 + 24
 	 * 笛卡尔座标系:
-	 * x = lcd_x = (fb_var.xres - string_width) / 2
-	 * y = fb_var.yres - lcd_y = fb_var.yres - (fb_var.yres - string_height) / 2 - 24
+	 * x = lcd_x = (fb_var.xres - line_box_width) / 2
+	 * y = fb_var.yres - lcd_y = fb_var.yres - (fb_var.yres - line_box_height) / 2 - 24
 	 */
     pen.x = (fb_var.xres - line_box_width) / 2 * 64;
     pen.y = ((fb_var.yres + line_box_height) / 2 - 24) * 64;
@@ -324,7 +324,7 @@ static void compute_string_bbox(const TGlyph *glyphs, int num_glyphs, FT_BBox *a
     *abbox = bbox;
 }
 
-static void Draw_Glyphs(const TGlyph *glyphs, int num_glyphs, const FT_Vector *pen)
+static void Draw_Glyphs(const TGlyph *glyphs, int num_glyphs, FT_Vector *pen)
 {
     int n;
     
@@ -336,7 +336,7 @@ static void Draw_Glyphs(const TGlyph *glyphs, int num_glyphs, const FT_Vector *p
         image = glyphs[n].image;
         
         /* transform copy (this will also translate it to the correct position */
-        FT_Glyph_Transform(image, 0, (FT_Vector *)pen );
+        FT_Glyph_Transform(image, 0, pen);
 
         /* convert glyph image to bitmap (destroy the glyph copy!) */
         error = FT_Glyph_To_Bitmap(&image, FT_RENDER_MODE_NORMAL, 
